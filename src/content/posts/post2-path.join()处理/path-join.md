@@ -60,13 +60,13 @@ return posix.normalize(ArrayPrototypeJoin(path, '/'));
 
 走到` validateString() ，`跟进后跳转到这
 
-![image-20251014200024177](D:\blog\source\img\image-20251014200024177.png)
+![image-20251014200024177](/home/wsh/env/blog/blog/src/content/posts/post2-path.join()处理/image-20251014200024177.jpeg)
 
 这我没搞懂，应该是一个简单判断，继续走就是判断传入的 arg 是不是字符串
 
 第二轮
 
-![image-20251014200523470](D:\blog\source\img\image-20251014200523470.png)走到这个地方,可以看到` arg = "app.ejs/."`
+![image-20251014200523470](/home/wsh/env/blog/blog/src/content/posts/post2-path.join()处理/image-20251014200523470.jpeg)走到这个地方,可以看到` arg = "app.ejs/."`
 
 第二轮进行完，得到 `path` 数组
 
