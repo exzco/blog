@@ -1,7 +1,10 @@
 ---
 title: xss
-date: 2025-10-28 19:09:12
-tags:
+published: 2025-12-09
+description: "xss"
+tags: ["CTF"]
+category: CTF
+draft: false
 ---
 
 xss 
