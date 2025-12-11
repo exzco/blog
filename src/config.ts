@@ -9,7 +9,7 @@ import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
 	title: "归档",
-	subtitle: "wsh",
+	subtitle: "wele",
 	lang: "zh_CN", // Language code, e.g. 'en', 'zh_CN', 'ja', etc.
 	themeColor: {
 		hue: 250, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
@@ -44,6 +44,7 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.About,
+		LinkPreset.Friends,
 		{
 			name: "GitHub",
 			url: "https://github.com/saicaca/fuwari", // Internal links should not include the base path, as it is automatically added
@@ -55,8 +56,8 @@ export const navBarConfig: NavBarConfig = {
 // 头像和一些链接
 export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/wsh.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
-	name: "wsh",
-	bio: "Make ",
+	name: "wele",
+	bio: "",
 	links: [
 		// {
 		// 	name: "Twitter",

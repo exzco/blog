@@ -3,7 +3,7 @@ title: Simple Guides for Fuwari
 published: 2025-12-08
 description: "How to use this blog template."
 image: "./cover.jpeg"
-tags: ["Fuwari", "Blogging"]
+tags: ["Fuwari"]
 category: Guides
 draft: false
 ---
