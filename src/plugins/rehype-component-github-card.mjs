@@ -94,7 +94,6 @@ export function GithubCardComponent(properties, children) {
 	);
 }
 
-
 export function FriendsCardComponent(properties, children) {
 	if (Array.isArray(children) && children.length !== 0)
 		return h("div", { class: "hidden" }, [

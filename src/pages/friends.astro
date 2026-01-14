@@ -12,7 +12,6 @@ if (!friendsPost) {
 	throw new Error("Friend page content not found");
 }
 
-
 const { Content } = await render(friendsPost);
 ---
 <MainGridLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
