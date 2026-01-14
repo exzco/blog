@@ -1,6 +1,6 @@
 ---
 title: kerberos-NTLM
-published: 2026-1-14
+published: 2026-01-14
 description: "CTF"
 tags: ["CTF"]
 category: CTF
