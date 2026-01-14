@@ -1,3 +1,15 @@
+---
+title: kerberos-NTLM
+published: 2026-1-14
+description: "CTF"
+tags: ["CTF"]
+category: CTF
+draft: false
+
+---
+
+
+
 ### 1. kerberos 协议
 
 `Kerberos` : 域环境下的默认认证协议，相对于 NTLM 更安全一些，引入了可信第三方 `Key Distribution Center`
