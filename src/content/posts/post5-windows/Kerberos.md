@@ -104,7 +104,7 @@ proxychains crackmapexec smb 172.22.1.2 -u administrator -H 10cf89a850fb1cdbe6bb
 
 总之就是让目标机器向恶意服务器通过 smb  协议通信，通信前会有 NTLM 认证。
 
-![img](D:\tools_D\blog\blog\src\content\posts\post5-windows\QQ_1768381517515-17683879035071.png)
+![img](./QQ_1768381517515-17683879035071.png)
 
 ### 3. 一些配置缺陷
 

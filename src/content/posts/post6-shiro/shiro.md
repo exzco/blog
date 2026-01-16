@@ -12,7 +12,7 @@ draft: false
 
 #### 1. cookie 加密过程
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768534040647.png)
+![img](./QQ_1768534040647.png)
 
 找 cookie 的加密过程，全局搜索 Cookie ，找到 Shiro 包中的一个类 CookieRememberMeManager 其中有两个主要方法 
 
@@ -92,7 +92,7 @@ protected byte[] getRememberedSerializedIdentity(SubjectContext subjectContext) 
 
 .class 文件下层次结构总找不到前面的调用方法，进入CookieRememberMeManager 所 extends 的父类AbstractRememberMeManager 中，ctrl+f 搜索该方法，找到getRememberedPrincipals 方法。
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768536348623.png)
+![img](./QQ_1768536348623.png)
 
 这里的 PrincipalCollection 通常是多个 Realm（数据源） 的集合。
 
@@ -100,19 +100,19 @@ protected byte[] getRememberedSerializedIdentity(SubjectContext subjectContext) 
 
 于是跟进看一下 convertBytesToPrincipals() 的实现。
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768536586681.png)
+![img](./QQ_1768536586681.png)
 
 做了两件事情，解密和反序列化。principals 就相当于是用户信息的明文数据了。
 
 看一下 decrypt 怎么实现的。
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768537832712.png)
+![img](./QQ_1768537832712.png)
 
 获取密钥服务，然后再次调用 decrypt ，跟进发现是一个接口。查看 decrypt 的参数，第一个是加密的数据，第二个是 key 。然后跟进 key 
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768538003898.png)
+![img](./QQ_1768538003898.png)
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768538016347.png)
+![img](./QQ_1768538016347.png)
 
 然后找到 key 是一个硬编码的字符串
 
@@ -139,7 +139,7 @@ public void setDecryptionCipherKey(byte[] decryptionCipherKey) {
 
 接下来跟进 deserialize 
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768538528585.png)
+![img](./QQ_1768538528585.png)
 
 ```java
 private Serializer<PrincipalCollection> serializer = new DefaultSerializer();
@@ -151,7 +151,7 @@ public Serializer<PrincipalCollection> getSerializer() {
 
 获取一个专门处理 PrincipalCollection 数据的默认的序列化器，然后反序列化 bytes 。其中 deserial() 方法调用了 readObject()
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768538945561.png)
+![img](./QQ_1768538945561.png)
 
 
 
@@ -236,11 +236,11 @@ if __name__ == "__main__":
 GqqleiFyRIKDczYSD3ASBDSMe3t5bcbdSZXBQjvB8yMnJdG8BKZeGQbfoUbQ2F1Z6Q8MNrwLLPa0wbphyLvlBPhRiWICjCsG6XUkr9E4oBUy0HnypoRB/6vpLZbk8mp8+iLdTc7sWTRU4Vmx72542wfvQIFg6t7NBCNmfwDxLpVBBhlvcOxEswp1iVR5lOVaH6bzuaPBPoFtl5kzP/L62T0nAjtSOt/uWgjCqoHohjMgmUR05dJlXj8G7OcXupPlic3F8+Daf4IgOHYFHRgdmGoXKF2K6ftQOhrngrZiX9eNQU7vz2vJIxWnkq6ZRicrwVickx8EYsmRqafj/6kNSUOTUBFc4phicojtg18b3B0CJQbZ2gEZ6Lpwu0U/sdM/
 ```
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768572708120.png)
+![img](./QQ_1768572708120.png)
 
 
 
-![img](D:\tools_D\blog\blog\src\content\posts\post6-shiro\QQ_1768572697074.png)
+![img](./QQ_1768572697074.png)
 
 
 
