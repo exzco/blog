@@ -1,6 +1,6 @@
 ---
 title: Simple Guides for Fuwari
-published: 2025-12-08
+published: 2025-11-18
 description: "How to use this blog template."
 image: "./cover.jpeg"
 tags: ["Fuwari"]

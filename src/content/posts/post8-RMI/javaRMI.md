@@ -1,5 +1,5 @@
 ---
-title: fastjson
+title: java_RMI
 published: 2025-11-29
 description: "java"
 tags: ["java"]
