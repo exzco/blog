@@ -29,9 +29,23 @@ import vercel from "@astrojs/vercel";
 
 // https://astro.build/config
 export default defineConfig({
+    image: {
+        service: {
+            entrypoint: 'astro/assets/services/sharp'
+        },
+        domains: ['fuwari.vercel.app'], // 如有远程图片可在此添加域名
+        remotePatterns: [{ protocol: "https" }],
+    },
   site: "https://fuwari.vercel.app/",
   base: "/",
   trailingSlash: "always",
+  
+  // 构建优化配置
+  output: 'static', // 确保纯静态输出，利于 CDN 缓存
+  build: {
+    inlineStylesheets: 'auto', // 自动内联小于 4KB 的 CSS，减少 HTTP 请求
+  },
+  compressHTML: true, // 压缩 HTML，移除空白和注释
 
   integrations: [
       tailwind({
@@ -173,7 +187,54 @@ export default defineConfig({
                   }
                   warn(warning);
               },
+              output: {
+                  // 代码分割策略：将大型库分离成独立 chunk
+                  manualChunks: (id) => {
+                      if (id.includes('node_modules')) {
+                          // 将 photoswipe 单独打包
+                          if (id.includes('photoswipe')) {
+                              return 'photoswipe';
+                          }
+                          // 将 katex 单独打包
+                          if (id.includes('katex')) {
+                              return 'katex';
+                          }
+                          // 将 overlayscrollbars 单独打包
+                          if (id.includes('overlayscrollbars')) {
+                              return 'scrollbar';
+                          }
+                          // 将 swup 相关库单独打包
+                          if (id.includes('swup')) {
+                              return 'swup';
+                          }
+                          // 其他第三方库统一打包为 vendor
+                          return 'vendor';
+                      }
+                  }
+              }
           },
+          // CSS 代码分割
+          cssCodeSplit: true,
+          // 使用 Terser 进行更好的压缩
+          minify: 'terser',
+          terserOptions: {
+              compress: {
+                  // 生产环境移除 console.log
+                  drop_console: true,
+                  // 移除 debugger
+                  drop_debugger: true,
+                  // 纯函数调用优化
+                  pure_funcs: ['console.log', 'console.info'],
+              },
+              format: {
+                  // 移除注释
+                  comments: false,
+              },
+          },
+      },
+      ssr: {
+          // 减少外部依赖，提升构建性能
+          noExternal: ['@iconify/svelte'],
       },
 	},
 
