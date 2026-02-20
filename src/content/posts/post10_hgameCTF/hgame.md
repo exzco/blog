@@ -7,8 +7,6 @@ category: CTF
 draft: false
 ---
 
-### 
-
 
 
 #### easyuu
@@ -28,7 +26,7 @@ window.fetch = async (...args) => {
 };
 ```
 
-![img](file:///C:\Users\Acer\AppData\Local\Temp\QQ_1770823720463.png)
+![img](QQ_1770823720463.png)
 
 js 发包请求这个 api
 
@@ -45,7 +43,7 @@ const data = await res.json()
 console.log(data)
 ```
 
-![img](file:///C:\Users\Acer\AppData\Local\Temp\QQ_1770824194679.png)
+![img](QQ_1770824194679.png)
 
 在当前目录发现这些文件，rust 写的 easyuu,这个 /api/list_dir 可以用来查看文件目录，
 
@@ -635,7 +633,7 @@ setTimeout(async () => {
 }, 6000);
 ```
 
-![img](file:///C:\Users\Acer\AppData\Local\Temp\QQ_1770825810853.png)
+![img](QQ_1771505476634.png)
 
 hgame{UpIOad-aNd-UpDaTE-@re_rE4ILy_3@sY1a5c8}
 
