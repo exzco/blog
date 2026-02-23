@@ -26,7 +26,7 @@ window.fetch = async (...args) => {
 };
 ```
 
-![img](QQ_1770823720463.png)
+![img](QQ_1770823720463.png
 
 js 发包请求这个 api
 
@@ -43,7 +43,7 @@ const data = await res.json()
 console.log(data)
 ```
 
-![img](QQ_1770824194679.png)
+![img](QQ_1770824194679.png
 
 在当前目录发现这些文件，rust 写的 easyuu,这个 /api/list_dir 可以用来查看文件目录，
 
