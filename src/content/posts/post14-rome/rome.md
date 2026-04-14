@@ -1,6 +1,6 @@
 ---
 title: Rome 反序列化
-published: 2026-03-05
+published: 2026-03-15
 description: "rome反序列化"
 tags: ["java"]
 category: java
