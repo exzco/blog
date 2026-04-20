@@ -209,7 +209,7 @@ public class templatesBytes extends AbstractTranslet {
 
 修改为
 
-```
+```java
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.Feature;
 import java.io.IOException;
@@ -265,7 +265,7 @@ JSONObject 就是一个 HashMap。
 
 
 
-```
+```java
 public DefaultJSONParser(final Object input, final JSONLexer lexer, final ParserConfig config){
     this.lexer = lexer;
     this.input = input;
@@ -287,7 +287,7 @@ public DefaultJSONParser(final Object input, final JSONLexer lexer, final Parser
 
 对 { [ 做额外处理避免了开销大的 nextToken()
 
-```
+```java
 public final void nextToken() {
     sp = 0;
 
@@ -404,7 +404,7 @@ public final void nextToken() {
 
 拿到一个起始的 token 然后跟进到 parse()，根据 token 判断走什么
 
-```
+```java
 public Object parse(Object fieldName) {
     final JSONLexer lexer = this.lexer;
     switch (lexer.token()) {
@@ -495,7 +495,7 @@ public Object parse(Object fieldName) {
 
 然后跟进 parseObject()
 
-```
+```java
 public final Object parseObject(final Map object, Object fieldName) {
     final JSONLexer lexer = this.lexer;
 
@@ -948,7 +948,7 @@ return deserializer.deserialze(this, clazz, fieldName);
 
 ![img](QQ_1769089625413.png)
 
-跟进到这就是调用了  setAutoCommit(true),下面就是 jdbcRowSetImpl 的了。埋坑，红线圈起来的调用栈，有的不可见，有的贼长，因为在家里面事情多一些，没有大块时间能看看，等回学校仔细研究研究看看。（不知道为啥有 setValue 就能调用 `@type`值的对象的 set`key` 方法）。
+跟进到这就是调用了  setAutoCommit(true),下面就是 jdbcRowSetImpl 的了
 
 ![img](QQ_1769089749341.png)
 
@@ -961,6 +961,70 @@ return deserializer.deserialze(this, clazz, fieldName);
 如果要使用黑名单的类，在黑名单类前面 + L 结尾 ＋ ; 绕过。![img](QQ_1768924124128.png)
 
 原因在 loadClass 中![img](QQ_1768924273099.png)
+
+#### 4.fastjson 1.2.42 版本绕过
+
+对黑名单的类进行 hash 比对，不再明文存储
+
+双写 L ; 绕过，没有循环检查
+
+#### 5.fastjson 1.2.43 版本绕过
+
+黑名单类前加 [
+
+```java
+public static Class<?> loadClass(String className, ClassLoader classLoader, boolean cache) {
+    if (className != null && className.length() != 0) {
+        Class<?> clazz = (Class)mappings.get(className);
+        if (clazz != null) {
+            return clazz;
+            // 这里直接 loadClass
+        } else if (className.charAt(0) == '[') {
+            Class<?> componentType = loadClass(className.substring(1), classLoader);
+            return Array.newInstance(componentType, 0).getClass();
+        } else if (className.startsWith("L") && className.endsWith(";")) {
+            String newClassName = className.substring(1, className.length() - 1);
+            return loadClass(newClassName, classLoader);
+        } else {
+            try {
+                if (classLoader != null) {
+                    clazz = classLoader.loadClass(className);
+                    if (cache) {
+                        mappings.put(className, clazz);
+                    }
+
+                    return clazz;
+                }
+            } catch (Throwable var7) {
+                var7.printStackTrace();
+            }
+
+            try {
+                ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                if (contextClassLoader != null && contextClassLoader != classLoader) {
+                    clazz = contextClassLoader.loadClass(className);
+                    if (cache) {
+                        mappings.put(className, clazz);
+                    }
+
+                    return clazz;
+                }
+            } catch (Throwable var6) {
+            }
+
+            try {
+                clazz = Class.forName(className);
+                mappings.put(className, clazz);
+                return clazz;
+            } catch (Throwable var5) {
+                return clazz;
+            }
+        }
+    } else {
+        return null;
+    }
+}
+```
 
 
 
