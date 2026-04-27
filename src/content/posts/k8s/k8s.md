@@ -19,7 +19,7 @@ draft: false
 
 ​	k8s 由控制平面和工作节点组成，工作节点托管 Pods，控制平面管理集群中的工作节点和 Pods。
 
-<img src="QQ_1776775277452.png" alt="img" style="zoom: 50%;" />
+<img src="QQ_1776775277452.png" alt="img"  />
 
 #### kube-api-server
 
@@ -320,7 +320,7 @@ spec:
 
 ​	前面我们提到 service 可以使用 LB 将服务暴露至公网，那为什么不使用这个方案？因为一个 service 对应一个 LB ，每个 service 都需要要一个 LB 设备导致成本变高，引入 ingress ，将发送到不同路径的请求转发到不同的 service ，例如 http://www.xxx.com/api  转发到 api-service ，http://www.xxx.com/dashboard 转发到 dashboard-service ，这样一个 LB 一个公网 ip ，域名即可支持多个 service。
 
-<img src="QQ_1776868119211.png" alt="img" style="zoom: 33%;" />
+<img src="QQ_1776868119211.png" alt="img"  />
 
 ```yaml
 
@@ -506,9 +506,9 @@ sudo kubeadm join <Master-IP>:6443 --token <token> \
 
 ![img](QQ_1776948572646.png)
 
-具体 pod deployment service gateway 的配置以及常用命令没写完（原计划下周讲的......突然提前了）
 
-下面有一些其他文档可以看看
+
+参考链接
 
 https://tttang.com/archive/1465/#toc_k8s_1
 
