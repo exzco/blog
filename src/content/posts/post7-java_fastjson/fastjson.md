@@ -1,5 +1,5 @@
 ---
-title: fastjson
+title: fastjson 1.2.24-1.2.43
 published: 2026-01-22
 description: "java"
 tags: ["java"]
@@ -14,7 +14,6 @@ draft: false
 提供了两个接口来实现序列化和反序列化的操作。
 
 - JSON.toJSONString 将 java 对象转换为 json 对象，序列化。
-
 - JSON.parseObject / JSON.parse 将 json 对象转换为 java 对象，反序列化.
 
 ![img](QQ_1768726824371.png)
@@ -167,7 +166,7 @@ public Class<?> checkAutoType(String typeName, Class<?> expectClass) {
 
 
 
-#### 2. fastjson 1.2.24 版本下的链子
+#### 3. fastjson 1.2.24 版本下的链子
 
 TODO
 
@@ -262,8 +261,6 @@ JSONObject 就是一个 HashMap。
 ![img](QQ_1769052260142.png)
 
 调用了 lookup() 方法，可以打 jndi+ldap，rmi
-
-
 
 ```java
 public DefaultJSONParser(final Object input, final JSONLexer lexer, final ParserConfig config){
@@ -952,7 +949,7 @@ return deserializer.deserialze(this, clazz, fieldName);
 
 ![img](QQ_1769089749341.png)
 
-#### 3. fastjson 1.2.25 - 1.2.41 绕过
+#### 4. fastjson 1.2.25 - 1.2.41 绕过
 
 提前配置 AutoTypeSupport 为 true
 
@@ -962,13 +959,13 @@ return deserializer.deserialze(this, clazz, fieldName);
 
 原因在 loadClass 中![img](QQ_1768924273099.png)
 
-#### 4.fastjson 1.2.42 版本绕过
+#### 5.fastjson 1.2.42 版本绕过
 
 对黑名单的类进行 hash 比对，不再明文存储
 
 双写 L ; 绕过，没有循环检查
 
-#### 5.fastjson 1.2.43 版本绕过
+#### 6.fastjson 1.2.43 版本绕过
 
 黑名单类前加 [
 
