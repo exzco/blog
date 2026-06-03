@@ -13,8 +13,6 @@ draft: false
 
 commans BeanUtils 提供了一个通过反射获取 Java Bean 属性的方法 PropertyUtils.getProperty() ，在获取 Bean 的某个特定属性值时，调用该属性的 getter 方法，因此衔接了 TemplateImpl 的 getOutproperties 加载恶意字节码，或是 JdbcRowSetImpl 的 getDatabaseMetaData 方法打 JNDI 注入。
 
-![img](./QQ_1779093072379.png)
-
 接下来查找哪里调用了 PropertyUtils.getProperty() ，
 
  ![img](QQ_1779106844139.png)
