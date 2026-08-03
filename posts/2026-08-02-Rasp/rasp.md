@@ -365,17 +365,148 @@ public class RuntimeTransformer {
 
 ```
 
-这里的 ClassReader  类似一个字节码读取流，调用 cr.accept() 方法，逐字节扫描，这个过程中，每次读到一个结构，比如 className field Method 会调用 ClassVisitor 去处理
+这里的 ClassReader  类似一个字节码读取流，调用 cr.accept() 方法，逐字节扫描，类似流式处理？这个过程中，每次读到一个结构，比如 className field Method 会调用 ClassVisitor 去处理
 
+写调试类打断点跟进，
 
+```java
+package debug;
 
+import org.objectweb.asm.ClassReader;
+import Log.log;
+/**
+ * 使用 ClassReader 读取 OrderService 的字节码
+ * 调试 ClassReader 的流式扫描过程
+ */
+public class DebugEntry {
 
+    public static void main(String[] args) throws Exception {
 
+        ClassReader cr = new ClassReader("OrderService");
+        DebugClassVisitor visitor = new DebugClassVisitor();
+        cr.accept(visitor, ClassReader.SKIP_FRAMES);
+        log.info("扫描完成");
+    }
+}
+```
 
+```java
+package debug;
+import Log.log;
+import org.objectweb.asm.*;
 
+public class DebugClassVisitor extends ClassVisitor {
 
+    public DebugClassVisitor() {
+        super(Opcodes.ASM9);
+    }
 
+    @Override
+    public void visit(int version, int access, String name,
+                      String signature, String superName, String[] interfaces) {
+        log.info("ClassVisitor visit class: " + name
+                + " extends " + superName);
+        super.visit(version, access, name, signature, superName, interfaces);
+    }
 
+    @Override
+    public FieldVisitor visitField(int access, String name, String descriptor,
+                                   String signature, Object value) {
+        log.info("ClassVisitor visitField: " + name + " " + descriptor);
+        return super.visitField(access, name, descriptor, signature, value);
+    }
 
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                     String signature, String[] exceptions) {
+        log.info("ClassVisitor visitMethod: " + name + descriptor);
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+        return new DebugMethodVisitor(mv, name);
+    }
 
+    @Override
+    public void visitEnd() {
+        log.info("ClassVisitor visitEnd");
+        super.visitEnd();
+    }
+
+    static class DebugMethodVisitor extends MethodVisitor {
+        private final String methodName;
+
+        DebugMethodVisitor(MethodVisitor mv, String methodName) {
+            super(Opcodes.ASM9, mv);
+            this.methodName = methodName;
+        }
+
+        @Override
+        public void visitCode() {
+            log.info("  MethodVisitor visitCode: " + methodName);
+            super.visitCode();
+        }
+
+        @Override
+        public void visitInsn(int opcode) {
+            log.info("  MethodVisitor visitInsn opcode=" + opcode);
+            super.visitInsn(opcode);
+        }
+
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name,
+                                    String descriptor, boolean isInterface) {
+            log.info("  MethodVisitor visitMethodInsn: "
+                    + owner + "." + name + descriptor);
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+        }
+
+        @Override
+        public void visitEnd() {
+            log.info("  MethodVisitor visitEnd: " + methodName);
+            super.visitEnd();
+        }
+    }
+}
+
+```
+
+![image-20260803164917412](image-20260803164917412.png)
+
+跟进 readMethod 方法，后续调试太麻烦了，来回倒退前进，于是转向打标， cr.accept 流式处理字节流，处理到字段 field 方法 method 会触发  visitField visitMethod 等方法
+
+![image-20260803165450174](image-20260803165450174.png)
+
+classVisitor 为 cv ，其 visitMtthod 方法可以重写用来匹配要 hook 的方法。匹配到 hook 的方法之后，接下来如何修改字节码
+
+![image-20260803191739402](image-20260803191739402.png)
+
+```java
+public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+    MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+    if ("start".equals(name) && "()Ljava/lang/Process;".equals(descriptor)) {
+        return new StartMethodAdvice(api, mv, access, name, descriptor);
+    }
+    return mv;
+}
+```
+
+asm 提供了 AdviceAdapter ，存在该方法 onMethodEnter()
+
+![image-20260803174510598](image-20260803174510598.png)
+
+写 MethodAdvice ，重写其 onMethodEnter 方法，在方法开头嵌入要执行的字节码，至此实现了简易的 rasp demo
+
+```java
+private static class StartMethodAdvice extends AdviceAdapter {
+    protected StartMethodAdvice(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
+        super(api, methodVisitor, access, name, descriptor);
+    }
+
+    @Override
+    protected void onMethodEnter() {
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ProcessBuilder", "command", "()Ljava/util/List;", false);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;", false);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "Transformer/HookHandler", "onProcessBuilderStart", "(Ljava/lang/String;)V", false);
+    }
+}
+```
 
