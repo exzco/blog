@@ -1,4 +1,4 @@
-## 0x01
+## 0x01 javaAgent 介绍
 
 ![image-20260801154922511](image-20260801154922511.png)
 
@@ -185,7 +185,7 @@ mvn clean package 打包 Agent.jar
 
 类加载前可以修改字节码，因此 RASP （运行时自我阻断）可以通过添加检查字节码对输入参数和 sink 函数调用进行实时检测阻断。
 
-## 0x02
+## 0x02 raspDemo
 
 对于生产环境下的 RASP ，需要 Hook 多个危险方法，例如 Runtime ProcessBuilder ObjectInputStream 等
 
@@ -220,7 +220,6 @@ public class Agent {
             }
 
             if ("java.lang.Thread".equals(className)
-                    || "java.lang.Runtime".equals(className)
                     || "java.lang.ProcessBuilder".equals(className)
                     || "java.io.ObjectInputStream".equals(className)
                     || "java.lang.Class".equals(className)) {
@@ -270,9 +269,6 @@ public class RaspTransformer implements ClassFileTransformer {
         }
 
         switch (className) {
-            case "java/lang/Runtime":
-                log.info("rasp agent successfully block Runtime,classLodaer = " + loader);
-                return RuntimeTransformer.transform(classFileBuffer);
             case "java/lang/ProcessBuilder":
                 log.info("rasp agent successfully block ProcessBuilder,classLodaer = " + loader);
                 return ProcessBuilderTransformer.transform(classFileBuffer);
@@ -293,7 +289,7 @@ public class RaspTransformer implements ClassFileTransformer {
 
 ```
 
-对于不同的可能导致危险的类，我们使用不同的 xxxxTransformer 类来实现 transform 方法，做不同的处理，这里举例 java/lang/Runtime ，
+对于不同的可能导致危险的类，我们使用不同的 xxxxTransformer 类来实现 transform 方法，做不同的处理，这里举例 java/lang/Runtime ， （后续项目删除了该类）
 
 ```java
 package Transformer;
@@ -509,4 +505,150 @@ private static class StartMethodAdvice extends AdviceAdapter {
     }
 }
 ```
+
+重写方法 onProcessBuilderStart 做最后的处理 --》 是否拦截
+
+```java
+public static void onProcessImplStart(String[] cmdarray) {
+    if (cmdarray == null || cmdarray.length == 0) return;
+    String command = String.join(" ", cmdarray);
+    onProcessImplStart(command);
+}
+
+public static void onProcessImplStart(String command) {
+    // 防止死循环
+    if (Boolean.TRUE.equals(IN_HOOK.get())) return;
+    IN_HOOK.set(true);
+    try {
+        boolean isDangerous = isDangerousCommand(command);
+        String source = HttpContext.isInHttpRequest() ? "HTTP" : "INTERNAL";
+        if (isDangerous) {
+            if ("HTTP".equals(source)) {
+                // HTTP 请求触发的危险命令执行：来源于外部，拦截
+                log.warn("RASP 拦截 java.lang.ProcessImpl#start 危险进程: " + command);
+                recordEvent("RCE_PROCESS_BUILDER", "java.lang.ProcessImpl", "start", command, true, source);
+                throw new SecurityException("RASP 拦截到危险进程启动: " + command);
+            } else {
+                log.warn("RASP 探测到 java.lang.ProcessImpl#start 但来自应用内部，放行观察: " + command);
+                recordEvent("RCE_PROCESS_BUILDER", "java.lang.ProcessImpl", "start", command, false, source);
+            }
+        } else {
+            log.info("RASP 判定 java.lang.ProcessImpl#start 安全并放行: " + command);
+            recordEvent("RCE_PROCESS_BUILDER", "java.lang.ProcessImpl", "start", command, false, source);
+        }
+    } finally {
+        IN_HOOK.set(false);
+    }
+}
+```
+
+## 0x03 rasp
+
+上面是一个 rasp-demo ，对其进行一些优化，例如系统内部执行的一些 `ping 127.0.0.1` 类似这样的无害指令，正常情况不应该被拦截，但是来自外部的，例如来自 HTTP 请求的，应该拦截，用户不该有执行代码的能力，只能有输入数据的能力。 因此可以 hook 一些 HTTP 入口，例如 `HttpServlet#service(ServletRequest, ServletResponse)`  、 `sun.net.httpserver.ServerImpl$Exchange$LinkHandler#handle(HttpExchange) `
+
+```java
+@Override
+protected void onMethodEnter() {
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "Transformer/HttpContext",
+            "enterHttpRequest", "()V", false);
+}
+
+@Override
+protected void onMethodExit(int opcode) {
+    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "Transformer/HttpContext",
+            "exitHttpRequest", "()V", false);
+}
+```
+
+![image-20260808143013469](image-20260808143013469.png)
+
+HttpContext 类提供  enterHttpRequest exitHttpRequest 方法，通过 DEPTH 常量是否大于 0 ，判断是否为外部 HTTP 请求。
+
+跨线程方法，存在上下文丢失的问题。
+
+先讲 java.lang.Thread , 内部存在 threadLocals inheritableThreadLocals 两个结构一样的存储变量
+
+![image-20260808222733799](image-20260808222733799.png)
+
+在 ThreadA 线程中，写入一些值，创建子线程 ThreadB 可以看到是无法访问 ThreadA 线程的上下文信息的，使用 onThreadSpawned(threadB2) 先登记子线程为待传递上下文的线程，可以将父线程 ThreadA 的上下文信息通过一些方法传递到子线程 ThreadB2 中。
+
+```java
+import Log.log;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.CountDownLatch;
+
+public class kthreadTest {
+    /** 当前线程上下文键值表 */
+    static final ThreadLocal<Map<String, String>> CTX = ThreadLocal.withInitial(HashMap::new);
+    /** 待继承的子线程登记表：child -> 父线程上下文快照 */
+    static final Map<Thread, Map<String, String>> PENDING = Collections.synchronizedMap(new WeakHashMap<>());
+    /** 当前线程是否处于「继承」状态 */
+    static final ThreadLocal<Boolean> INHERITED = ThreadLocal.withInitial(() -> false);
+    /** onThreadSpawned：start() 钩子（父线程执行）——把子线程登记进 PENDING，值为父线程键值对快照 */
+    static void onThreadSpawned(Thread child) {
+        if (!CTX.get().isEmpty()) {
+            PENDING.put(child, new HashMap<>(CTX.get())); 
+        }
+    }
+    /** enterInheritedContext：run() 入口钩子（子线程执行）——取出快照，重建到子线程自己的存储 */
+    static boolean enterInheritedContext(Thread self) {
+        Map<String, String> snapshot = PENDING.remove(self);
+        if (snapshot != null) {
+            CTX.get().putAll(snapshot); // 子线程本地重建：写自己的 ThreadLocal
+            INHERITED.set(true);
+            return true;
+        }
+        return false;
+    }
+    static void exitInheritedContext() {
+        if (INHERITED.get()) {
+            INHERITED.set(false);
+            CTX.remove(); 
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        final CountDownLatch done = new CountDownLatch(1);
+        Thread threadA = new Thread(() -> {
+            CTX.get().put("userId", "u-42");
+            CTX.get().put("requestId", "req-1001");
+            CTX.get().put("clientIp", "10.0.0.8");
+            log.info("[threadA] 写入上下文: " + CTX.get());
+
+            try {
+                Thread threadB = new Thread(() -> {
+                    log.info("[threadB] 上下文: " + CTX.get());
+                });
+                threadB.start();
+                threadB.join();
+
+                Thread threadB2 = new Thread(() -> {
+                    boolean inherited = enterInheritedContext(Thread.currentThread()); // run() 入口钩子
+                    try {
+                        log.info("[threadB2] 传递后的上下文: " + CTX.get());
+                    } finally {
+                        exitInheritedContext(); // run() 出口钩子：清理
+                    }
+                });
+                onThreadSpawned(threadB2); // start() 钩子：threadA 登记 threadB2 的快照
+                threadB2.start();
+                threadB2.join();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                done.countDown();
+            }
+        });
+        threadA.start();
+        done.await();
+        log.info("[main] 上下文:" + CTX.get() + " ");
+    }
+}
+```
+
+![image-20260808232213505](image-20260808232213505.png)
 
