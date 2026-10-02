@@ -2,78 +2,59 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>wsh</title>
-    <meta name="description" content="关于">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+    <title>About - wsh's blog</title>
+    <meta name="description" content="关于我">
     <link rel="stylesheet" href="{{base_path}}style.css">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-                "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            zoom: 1.1;
-        }
-        .nav-link { position: relative; transition: color 0.15s; }
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -4px; left: 0; right: 0;
-            height: 2px;
-            background-color: #09090b;
-            border-radius: 1px;
-        }
-        .about-body p {
-            font-size: 0.875rem;
-            color: #3f3f46;
-            line-height: 1.8;
-            margin-bottom: 1rem;
-        }
-        .about-body h2 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #09090b;
-            margin-top: 2rem;
-            margin-bottom: 0.5rem;
-        }
-        .about-body ul {
-            list-style: disc;
-            padding-left: 1.25rem;
-            font-size: 0.875rem;
-            color: #3f3f46;
-            line-height: 1.8;
-            margin-bottom: 1rem;
-        }
-        .about-body a {
-            color: #3f3f46;
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-        .about-body a:hover { color: #09090b; }
-    </style>
 </head>
-<body class="bg-white text-zinc-950 min-h-screen">
+<body class="bg-cactus-bg text-cactus-text font-sans antialiased max-w-3xl mx-auto px-6 py-10 flex flex-col min-h-screen text-[15px] leading-relaxed">
 
-    <!-- Top Nav -->
-    <header class="w-full flex flex-col items-center pt-12 pb-6 px-4">
-        <div class="w-20 h-20 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center mb-4 overflow-hidden">
-            {{avatar}}
-        </div>
-        <nav class="flex items-center gap-6 text-sm">
-            <a href="index.html" class="nav-link text-zinc-500 hover:text-zinc-950 text-sm pb-1">归档</a>
-            <a href="about.html" class="nav-link active font-medium text-zinc-950 text-sm pb-1">关于</a>
+    <!-- Header -->
+    <header id="header" class="w-full mb-12 flex flex-col sm:flex-row items-center sm:items-start">
+        <a href="{{base_path}}index.html" class="flex items-center flex-shrink-0 mb-4 sm:mb-0 group">
+            <div class="w-[50px] h-[50px] rounded mr-5 overflow-hidden bg-cactus-code-bg">
+                {{avatar}}
+            </div>
+            <div class="flex flex-col justify-center">
+                <h1 class="text-[1.5rem] font-bold tracking-tight text-cactus-text leading-tight group-hover:opacity-80 transition-opacity">wsh's blog</h1>
+            </div>
+        </a>
+
+        <!-- Nav -->
+        <nav class="sm:ml-auto mt-2 sm:mt-0 flex items-center">
+            <ul class="flex items-center text-sm font-light text-cactus-link">
+                <li class="border-r border-cactus-link px-4 leading-none"><a href="{{base_path}}index.html" class="hover:bg-gradient-to-t hover:from-cactus-link/20 hover:to-transparent pb-1 transition-all">Home</a></li>
+                <li class="pl-4 leading-none"><a href="{{base_path}}about.html" class="hover:bg-gradient-to-t hover:from-cactus-link/20 hover:to-transparent border-b border-cactus-link pb-1 transition-all">About</a></li>
+            </ul>
         </nav>
-        <div class="w-full max-w-xl border-b border-zinc-100 mt-6"></div>
     </header>
 
-    <!-- About Content -->
-    <main class="max-w-xl mx-auto px-6 pb-20">
-        <div class="about-body mt-8">
-            <p> <strong>wsh</strong>。</p>
-            <ul>
-                <li>Email：<a href="#">wsh_lavery@qq.com</a></li>
-
-            </ul>
-        </div>
+    <!-- Content -->
+    <main class="flex-grow w-full prose prose-invert max-w-none prose-a:text-cactus-link prose-a:no-underline hover:prose-a:underline prose-a:underline-offset-4 prose-code:text-cactus-code prose-code:bg-cactus-code-bg prose-pre:bg-cactus-code-bg">
+        <article class="post">
+            <header>
+                <h1 class="text-2xl font-bold mb-6 text-cactus-text tracking-tight">关于</h1>
+            </header>
+            <div class="content font-light">
+                <p> <strong>wsh | 2024CTFer | web</strong></p>
+                <ul>
+                    <li>Email：<a href="#">wsh_lavery@qq.com</a></li>
+                    <li>github：<a href="#">https://github.com/exzco</a></li>
+                </ul>
+            </div>
+        </article>
     </main>
+
+    <!-- Footer -->
+    <footer class="w-full mt-16 pt-6 pb-8 text-sm text-cactus-meta flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-cactus-border/30">
+        <div>Copyright &copy; 2024 wsh</div>
+        <nav>
+            <ul class="flex space-x-4 text-cactus-meta">
+                <li><a href="{{base_path}}index.html" class="hover:text-cactus-link hover:underline underline-offset-4 decoration-cactus-link transition-colors">Home</a></li>
+                <li><a href="{{base_path}}about.html" class="hover:text-cactus-link hover:underline underline-offset-4 decoration-cactus-link transition-colors">About</a></li>
+            </ul>
+        </nav>
+    </footer>
 
 </body>
 </html>

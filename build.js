@@ -69,12 +69,12 @@ function generateToc(html) {
             text: match[3].replace(/<[^>]+>/g, '').trim()
         });
     }
-    if (items.length === 0) return '<p class="text-xs text-zinc-400 px-3">暂无目录</p>';
+    if (items.length === 0) return '<p class="text-xs text-cactus-meta opacity-50">暂无目录</p>';
     return items.map(item => {
-        let levelClass = '';
-        if (item.level === 'h3') levelClass = 'toc-h3';
-        else if (item.level === 'h4') levelClass = 'toc-h4';
-        return `<a href="#${item.id}" class="toc-link ${levelClass} flex items-center px-3 py-1.5 text-xs font-medium text-zinc-500 rounded-md hover:bg-zinc-100 hover:text-zinc-950 transition-colors">${escapeHtml(item.text)}</a>`;
+        let paddingClass = '';
+        if (item.level === 'h3') paddingClass = 'pl-3';
+        else if (item.level === 'h4') paddingClass = 'pl-6';
+        return `<a href="#${item.id}" class="toc-link block py-1 hover:text-cactus-link transition-colors ${paddingClass}">${escapeHtml(item.text)}</a>`;
     }).join('\n');
 }
 
@@ -139,7 +139,7 @@ function getAvatarHtml(distDir) {
         const src = path.join(__dirname, 'template', `avatar.${ext}`);
         if (fs.existsSync(src)) {
             fs.copyFileSync(src, path.join(distDir, `avatar.${ext}`));
-            return `<img src="avatar.${ext}" alt="avatar" class="w-full h-full object-cover">`;
+            return `<img src="{{base_path}}avatar.${ext}" alt="avatar" class="w-full h-full object-cover">`;
         }
     }
     return `<span class="text-4xl" role="img" aria-label="avatar">🐱</span>`;
@@ -215,15 +215,19 @@ function main() {
     let skipCount = 0;
 
     // 递归查找所有文章目录
+    const avatarHtml = getAvatarHtml(CONFIG.distDir);
     const articleDirs = findArticleDirs(CONFIG.postsDir);
 
     for (const article of articleDirs) {
         const folderName = path.basename(article.dir);
         const raw = fs.readFileSync(article.mdPath, 'utf-8');
 
-        // 解析 Front Matter (这个极快，每次都读以确保归档主页是最新的)
+        // 解析 Front Matter
         const { data: fm, content: mdContent } = matter(raw);
-        const title = (fm.title || '').trim() || folderName;
+        let title = (fm.title || '').trim();
+        if (!title) {
+            title = folderName.replace(/^\d{4}-\d{2}-\d{2}-?/, '');
+        }
 
         let date = '';
         const rawDate = fm.published || fm.date;
@@ -266,14 +270,15 @@ function main() {
             const toc = generateToc(htmlContent);
 
             // 注入模板
-            let articleHtml = articleTemplate
+            let articleHtml = articleTemplate.replace(/\{\{avatar\}\}/g, avatarHtml)
                 .replace(/\{\{base_path\}\}/g, '../../')
                 .replace(/\{\{slug\}\}/g,        slug)
                 .replace(/\{\{title\}\}/g,       escapeHtml(title))
                 .replace(/\{\{description\}\}/g, escapeHtml(description))
                 .replace(/\{\{date\}\}/g,         date)
                 .replace(/\{\{toc\}\}/g,          toc)
-                .replace(/\{\{content\}\}/g,      htmlContent);
+                .replace(/\{\{content\}\}/g, htmlContent)
+                ;
 
             // 压缩 HTML
             articleHtml = minifyHtml(articleHtml);
@@ -295,22 +300,17 @@ function main() {
     // 按日期降序排列
     posts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-    const avatarHtml = getAvatarHtml(CONFIG.distDir);
-
+    
     // ── Step 4: 生成 index.html ───────────────────────────────────────────────
     const archiveList = generateArchiveList(posts);
-    let indexHtml = indexTemplate
-        .replace(/\{\{base_path\}\}/g, '')
-        .replace(/\{\{avatar\}\}/g,        avatarHtml)
+    let indexHtml = indexTemplate.replace(/\{\{avatar\}\}/g, avatarHtml).replace(/\{\{base_path\}\}/g, '')
         .replace(/\{\{archive_list\}\}/g,  archiveList);
     indexHtml = minifyHtml(indexHtml);
     fs.writeFileSync(path.join(CONFIG.distDir, 'index.html'), indexHtml, 'utf-8');
     console.log('✅ 主页：index.html');
 
     // ── Step 5: 生成 about.html ───────────────────────────────────────────────
-    let aboutHtml = aboutTemplate
-        .replace(/\{\{base_path\}\}/g, '')
-        .replace(/\{\{avatar\}\}/g, avatarHtml);
+    let aboutHtml = aboutTemplate.replace(/\{\{avatar\}\}/g, avatarHtml).replace(/\{\{base_path\}\}/g, '');
     aboutHtml = minifyHtml(aboutHtml);
     fs.writeFileSync(path.join(CONFIG.distDir, 'about.html'), aboutHtml, 'utf-8');
     console.log('✅ 关于页：about.html');
@@ -323,23 +323,15 @@ function main() {
 
 /** 生成按年分组的归档 HTML */
 function generateArchiveList(posts) {
-    if (posts.length === 0) return '<p class="text-sm text-zinc-400 mt-8 text-center">暂无文章</p>';
+    if (posts.length === 0) return '<p class="text-sm text-cactus-meta text-center">暂无文章</p>';
 
-    const byYear = {};
-    for (const post of posts) {
-        const y = post.year || '未知';
-        (byYear[y] = byYear[y] || []).push(post);
-    }
-
-    return Object.keys(byYear).sort((a, b) => b - a).map(year => `
-<section class="mt-10">
-  <h2 class="text-2xl font-bold text-zinc-950 mb-4">${year}</h2>
-  ${byYear[year].map(post => `
-  <div class="article-row">
-    <span class="article-date">${getMonthDay(post.date)}</span>
-    <a href="posts/${post.slug}/index.html" class="article-title">${escapeHtml(post.title)}</a>
-  </div>`).join('')}
-</section>`).join('');
+    return posts.map(post => `
+    <li class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 mb-2">
+      <div class="text-cactus-meta font-mono text-sm whitespace-nowrap min-w-[6rem]">
+        <time datetime="${post.date}">${post.date}</time>
+      </div>
+      <a href="posts/${post.slug}/index.html" class="text-cactus-link hover:underline underline-offset-4 decoration-cactus-link transition-colors">${escapeHtml(post.title)}</a>
+    </li>`).join('');
 }
 
 /** 统计 dist 总文件数和大小 */

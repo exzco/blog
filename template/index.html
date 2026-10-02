@@ -2,77 +2,57 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>wsh</title>
-    <meta name="description" content="文章归档列表">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+    <title>wsh's blog</title>
+    <meta name="description" content="wsh's blog">
     <link rel="stylesheet" href="{{base_path}}style.css">
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-                "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            zoom: 1.1;
-        }
-        .nav-link {
-            position: relative;
-            transition: color 0.15s;
-        }
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0; right: 0;
-            height: 2px;
-            background-color: #09090b;
-            border-radius: 1px;
-        }
-        .article-row {
-            display: flex;
-            align-items: baseline;
-            gap: 1.25rem;
-            padding: 0.45rem 0;
-            transition: background 0.1s;
-        }
-        .article-row:hover .article-title {
-            color: #09090b;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-        }
-        .article-date {
-            font-size: 0.75rem;
-            color: #a1a1aa;
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            white-space: nowrap;
-            min-width: 3rem;
-        }
-        .article-title {
-            font-size: 0.875rem;
-            color: #3f3f46;
-            transition: color 0.15s;
-        }
-    </style>
 </head>
-<body class="bg-white text-zinc-950 min-h-screen">
+<body class="bg-cactus-bg text-cactus-text font-sans antialiased max-w-3xl mx-auto px-6 py-10 flex flex-col min-h-screen text-[15px] leading-relaxed">
 
-    <!-- Top Nav -->
-    <header class="w-full flex flex-col items-center pt-12 pb-6 px-4">
-        <!-- Avatar placeholder -->
-        <div class="w-20 h-20 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center mb-4 overflow-hidden">
-            {{avatar}}
-        </div>
-        <!-- Blog Name -->
-        <h1 class="text-base font-bold text-zinc-950 tracking-tight mb-5"></h1>
+    <!-- Header -->
+    <header id="header" class="w-full mb-12 flex flex-col sm:flex-row items-center sm:items-start">
+        <a href="{{base_path}}index.html" class="flex items-center flex-shrink-0 mb-4 sm:mb-0 group">
+            <div class="w-[50px] h-[50px] rounded mr-5 overflow-hidden bg-cactus-code-bg">
+                {{avatar}}
+            </div>
+            <div class="flex flex-col justify-center">
+                <h1 class="text-[1.5rem] font-bold tracking-tight text-cactus-text leading-tight group-hover:opacity-80 transition-opacity">wsh's blog</h1>
+            </div>
+        </a>
+
         <!-- Nav -->
-        <nav class="flex items-center gap-6 text-sm">
-            <a href="index.html" class="nav-link active font-medium text-zinc-950 text-sm pb-1">归档</a>
-            <a href="about.html" class="nav-link text-zinc-500 hover:text-zinc-950 text-sm pb-1">关于</a>
+        <nav class="sm:ml-auto mt-2 sm:mt-0 flex items-center">
+            <ul class="flex items-center text-sm font-light text-cactus-link">
+                <li class="border-r border-cactus-link px-4 leading-none"><a href="{{base_path}}index.html" class="hover:bg-gradient-to-t hover:from-cactus-link/20 hover:to-transparent border-b border-cactus-link pb-1 transition-all">Home</a></li>
+                <li class="pl-4 leading-none"><a href="{{base_path}}about.html" class="hover:bg-gradient-to-t hover:from-cactus-link/20 hover:to-transparent pb-1 transition-all">About</a></li>
+            </ul>
         </nav>
-        <div class="w-full max-w-xl border-b border-zinc-100 mt-6"></div>
     </header>
 
-    <!-- Archive List -->
-    <main class="max-w-xl mx-auto px-6 pb-20">
-        {{archive_list}}
+    <!-- Content -->
+    <main class="flex-grow w-full">
+        <section id="about" class="mb-10 text-cactus-text font-light">
+        </section>
+        
+        <!-- Writing Section -->
+        <section id="writing">
+            <h2 class="text-xl font-bold mb-6 text-cactus-text tracking-tight"><a href="{{base_path}}index.html" class="hover:text-cactus-link transition-colors">Writing</a></h2>
+            <ul class="flex flex-col">
+                {{archive_list}}
+            </ul>
+        </section>
     </main>
+
+    <!-- Footer -->
+    <footer class="w-full mt-16 pt-6 pb-8 text-sm text-cactus-meta flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-cactus-border/30">
+        <div>Copyright &copy; 2024 wsh</div>
+        <nav>
+            <ul class="flex space-x-4 text-cactus-meta">
+                <li><a href="{{base_path}}index.html" class="hover:text-cactus-link hover:underline underline-offset-4 decoration-cactus-link transition-colors">Home</a></li>
+                <li><a href="{{base_path}}about.html" class="hover:text-cactus-link hover:underline underline-offset-4 decoration-cactus-link transition-colors">About</a></li>
+            </ul>
+        </nav>
+    </footer>
 
 </body>
 </html>
