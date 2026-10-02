@@ -655,17 +655,9 @@ NoSuchBucket ： 全局命名空间下找不到这个 bucket , 这里我们可�
 
 通过 put 方法, x-oss-object-acl: public-read 更改对象 acl 策略
 
-## 4、cicd
+### (4) policy 注入
 
-
-
-
-
-## 5、 内网渗透
-
-![image-20260925003822763](image-20260925003822763.png)
-
-https://www.netstarsec.com/%e9%9b%86%e6%9d%83%e7%b3%bb%e5%88%97%e7%a7%91%e6%99%ae-%e6%83%b3%e4%ba%86%e8%a7%a3ad%e6%94%bb%e5%87%bb%e9%9d%a2%ef%bc%9f%e7%8b%ac%e5%ae%b6%e5%b9%b2%e8%b4%a7%e6%94%be%e9%80%81%ef%bc%88%e4%b8%8b/
+todo...
 
 
 
